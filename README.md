@@ -1,7 +1,7 @@
 # DATA-230-Midterm
 ## Dataset
 Dataset: Airline Passenger Satisfaction (Kaggle) https://www.kaggle.com/datasets/johndddddd/customer-satisfaction/data 
-Contains real airline passenger survey responses
+* Contains real airline passenger survey responses
 
 Dataset Size
 
