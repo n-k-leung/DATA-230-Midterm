@@ -4,7 +4,9 @@ Dataset: Airline Passenger Satisfaction (Kaggle) https://www.kaggle.com/datasets
 Contains real airline passenger survey responses
 
 Dataset Size
+
 ~129,000 passenger records
+
 24 variables including demographics, service ratings, and operational data
 Sufficiently complex and appropriate for exploratory data analysis
 
