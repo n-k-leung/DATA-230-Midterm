@@ -533,3 +533,82 @@ elif page == "📈 Model Metrics":
         ax.set_title("Train vs Test Performance Drift\n(solid = train, hollow = test)")
         ax.legend(fontsize=8, ncol=2); ax.grid(True)
         st.pyplot(fig); plt.close()
+        # ══════════════════════════════════════════════════════════════════
+        # ROC & PR CURVES
+        # ══════════════════════════════════════════════════════════════════
+        elif page == "🔀 ROC & PR Curves":
+            st.markdown("# 🔀 ROC & Precision-Recall Curves")
+
+            col1, col2 = st.columns(2)
+            with col1:
+                st.markdown('<div class="section-header"><b>ROC Curves</b></div>', unsafe_allow_html=True)
+                fig, ax = plt.subplots(figsize=(6, 5))
+                for r, color in zip(results, COLORS):
+                    fpr, tpr, _ = roc_curve(y_test, r["prob"])
+                    ax.plot(fpr, tpr, label=f"{r['model'].split('(')[0].strip()} (AUC={r['auc']:.3f})",
+                            color=color, linewidth=2)
+                ax.plot([0,1],[0,1],"w--",linewidth=1,alpha=0.5)
+                ax.set_xlabel("False Positive Rate"); ax.set_ylabel("True Positive Rate")
+                ax.set_title("ROC Curves"); ax.legend(fontsize=8); ax.grid(True)
+                st.pyplot(fig); plt.close()
+
+            with col2:
+                st.markdown('<div class="section-header"><b>Precision-Recall Curves</b></div>', unsafe_allow_html=True)
+                fig, ax = plt.subplots(figsize=(6, 5))
+                for r, color in zip(results, COLORS):
+                    prec, rec, _ = precision_recall_curve(y_test, r["prob"])
+                    ap = average_precision_score(y_test, r["prob"])
+                    ax.plot(rec, prec, label=f"{r['model'].split('(')[0].strip()} (AP={ap:.3f})",
+                            color=color, linewidth=2)
+                ax.set_xlabel("Recall"); ax.set_ylabel("Precision")
+                ax.set_title("Precision-Recall Curves"); ax.legend(fontsize=8); ax.grid(True)
+                st.pyplot(fig); plt.close()
+
+            st.markdown("---")
+            st.markdown('<div class="section-header"><b>Threshold Explorer</b></div>', unsafe_allow_html=True)
+            model_sel = st.selectbox("Select model", MODEL_NAMES)
+            r_sel = next(r for r in results if r["model"] == model_sel)
+            thresh = st.slider("Decision Threshold", 0.1, 0.9, 0.5, 0.01)
+            y_pred_thresh = (r_sel["prob"] >= thresh).astype(int)
+            c1, c2, c3, c4 = st.columns(4)
+            c1.metric("Precision", f"{precision_score(y_test, y_pred_thresh, zero_division=0):.4f}")
+            c2.metric("Recall",    f"{recall_score(y_test, y_pred_thresh, zero_division=0):.4f}")
+            c3.metric("F1",        f"{f1_score(y_test, y_pred_thresh, zero_division=0):.4f}")
+            c4.metric("Accuracy",  f"{accuracy_score(y_test, y_pred_thresh):.4f}")
+
+            fig, ax = plt.subplots(figsize=(10, 3))
+            fpr, tpr, thresholds = roc_curve(y_test, r_sel["prob"])
+            ax.plot(fpr, tpr, color=COLORS[MODEL_NAMES.index(model_sel)], linewidth=2)
+            idx = np.argmin(np.abs(thresholds - thresh))
+            ax.scatter([fpr[idx]], [tpr[idx]], color="#ffd166", s=100, zorder=5, label=f"Threshold={thresh:.2f}")
+            ax.plot([0,1],[0,1],"w--",alpha=0.5)
+            ax.set_xlabel("FPR"); ax.set_ylabel("TPR")
+            ax.set_title(f"ROC — {model_sel}"); ax.legend(); ax.grid(True)
+            st.pyplot(fig); plt.close()
+
+        # ══════════════════════════════════════════════════════════════════
+        # CONFUSION MATRICES
+        # ══════════════════════════════════════════════════════════════════
+        elif page == "🧩 Confusion Matrices":
+            st.markdown("# 🧩 Confusion Matrices")
+
+            fig, axes = plt.subplots(1, 3, figsize=(15, 5))
+            for ax, r, color in zip(axes, results, COLORS):
+                sns.heatmap(r["cm"], annot=True, fmt="d", cmap="Blues", ax=ax, linewidths=0.5, cbar=False)
+                ax.set_title(r["model"], color=color)
+                ax.set_xlabel("Predicted", color="#8892b0"); ax.set_ylabel("Actual", color="#8892b0")
+                ax.set_xticklabels(["Unsatisfied", "Satisfied"], rotation=30)
+                ax.set_yticklabels(["Unsatisfied", "Satisfied"], rotation=0)
+            fig.suptitle("Confusion Matrices — All Models", color="#ccd6f6", fontsize=14)
+            plt.tight_layout(); st.pyplot(fig); plt.close()
+
+            st.markdown("---")
+            st.markdown('<div class="section-header"><b>Detailed Breakdown</b></div>', unsafe_allow_html=True)
+            model_sel = st.selectbox("Select model for details", MODEL_NAMES)
+            r_sel = next(r for r in results if r["model"] == model_sel)
+            tn, fp, fn, tp = r_sel["cm"].ravel()
+            c1, c2, c3, c4 = st.columns(4)
+            c1.metric("✅ True Positives",  tp)
+            c2.metric("✅ True Negatives",  tn)
+            c3.metric("❌ False Positives", fp)
+            c4.metric("❌ False Negatives", fn)
