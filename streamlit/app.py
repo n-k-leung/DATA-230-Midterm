@@ -366,7 +366,7 @@ if page == "🏠 Overview":
         columns=[m.title() for m in metrics], index=MODEL_NAMES
     )
     st.dataframe(
-        df_metrics.style.format("{:.4f}").background_gradient(cmap="coolwarm", axis=None)
+        df_metrics.style.format("{:.4f}").background_gradient(cmap="coolwarm", axis=None),
         use_container_width=True
     )
 
