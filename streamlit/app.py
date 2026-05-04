@@ -47,13 +47,13 @@ st.markdown("""
 <style>
     .main { background-color: #0f1117; }
     .stMetric {
-        background: linear-gradient(135deg, #1e2130 0%, #262b3d 100%);
-        border: 1px solid #334155;
+        background: linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%);
+        border: 1px solid #4F46E5;
         border-radius: 12px;
         padding: 16px;
     }
-    .stMetric label { color: #8892b0 !important; font-size: 0.8rem !important; }
-    .stMetric [data-testid="metric-value"] { color: #ccd6f6 !important; font-size: 1.5rem !important; }
+    .stMetric label { color: #1e293b !important; font-size: 0.8rem !important; }
+    .stMetric [data-testid="metric-value"] { color: #111827 !important; font-size: 1.5rem !important; }
     .section-header {
         background: linear-gradient(90deg, #1e293b, transparent);
         border-left: 4px solid #4F46E5;
@@ -139,7 +139,7 @@ def generate_synthetic_data(n_samples=5000, seed=42):
 # ─────────────────────────────────────────────────────────────────
 # PIPELINE
 # ─────────────────────────────────────────────────────────────────
-@st.cache_data
+@st.cache_resource
 def run_pipeline(n_samples, test_size, smote_on, weight_on, log_transform_on, use_best_params, seed):
     FEATURES = [
         "flight_distance", "departure_delay_in_minutes", "arrival_delay_in_minutes",
