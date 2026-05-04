@@ -48,15 +48,15 @@ st.markdown("""
     .main { background-color: #0f1117; }
     .stMetric {
         background: linear-gradient(135deg, #1e2130 0%, #262b3d 100%);
-        border: 1px solid #3d4663;
+        border: 1px solid #334155;
         border-radius: 12px;
         padding: 16px;
     }
     .stMetric label { color: #8892b0 !important; font-size: 0.8rem !important; }
     .stMetric [data-testid="metric-value"] { color: #ccd6f6 !important; font-size: 1.5rem !important; }
     .section-header {
-        background: linear-gradient(90deg, #1e2130, transparent);
-        border-left: 4px solid #64ffda;
+        background: linear-gradient(90deg, #1e293b, transparent);
+        border-left: 4px solid #4F46E5;
         padding: 8px 16px;
         margin: 24px 0 16px 0;
         border-radius: 0 8px 8px 0;
@@ -327,7 +327,7 @@ X_train_sc  = data["X_train_sc"]
 y_test      = data["y_test"]
 best_models = data["best_models"]
 
-COLORS      = ["#64ffda", "#ff6b9d", "#ffd166"]
+COLORS = ["#4F46E5", "#22C55E", "#F97316"]
 MODEL_NAMES = [r["model"] for r in results]
 
 plt.rcParams.update({
@@ -529,7 +529,7 @@ elif page == "🧩 Confusion Matrices":
 
     fig, axes = plt.subplots(1, 3, figsize=(15, 5))
     for ax, r, color in zip(axes, results, COLORS):
-        sns.heatmap(r["cm"], annot=True, fmt="d", cmap="Blues", ax=ax, linewidths=0.5, cbar=False)
+        sns.heatmap(r["cm"], annot=True, fmt="d", cmap="Purples", ax=ax, linewidths=0.5, cbar=False)
         ax.set_title(r["model"], color=color)
         ax.set_xlabel("Predicted", color="#8892b0"); ax.set_ylabel("Actual", color="#8892b0")
         ax.set_xticklabels(["Unsatisfied", "Satisfied"], rotation=30)
@@ -591,7 +591,7 @@ elif page == "🔬 Feature Importance":
     imp_df.index += 1
     st.dataframe(
         imp_df.style.format({c: "{:.4f}" for c in imp_df.columns[1:]})
-                    .background_gradient(subset=["Avg Importance"], cmap="YlGnBu"),
+                    .background_gradient(subset=["Avg Importance"], cmap="coolwarm"),
         use_container_width=True
     )
 
@@ -669,7 +669,7 @@ elif page == "🧠 LIME Explanations":
             sorted_pairs = sorted(exp_list, key=lambda x: abs(x[1]))
             feat_names_s = [p[0] for p in sorted_pairs]
             weights_s    = [p[1] for p in sorted_pairs]
-            bar_colors   = ["#64ffda" if w > 0 else "#ff6b9d" for w in weights_s]
+            bar_colors   = ["#22C55E" if w > 0 else "#F97316" for w in weights_s]
 
             fig, ax = plt.subplots(figsize=(10, max(4, len(feat_names_s) * 0.55)))
             bars = ax.barh(feat_names_s, weights_s, color=bar_colors, alpha=0.85, edgecolor="#3d4663")
