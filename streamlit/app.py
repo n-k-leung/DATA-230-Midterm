@@ -263,9 +263,9 @@ with st.sidebar:
     st.markdown("---")
 
     st.markdown("### 📊 Dataset")
-    n_samples = st.slider("Sample Size", 1000, 10000, 5000, 500)
+    n_samples = 5000
     test_size = st.slider("Test Split (%)", 10, 40, 20, 5) / 100
-    seed      = st.number_input("Random Seed", value=42, min_value=0, max_value=9999)
+    seed      = 42
 
     st.markdown("### ⚙️ Pipeline Options")
     smote_on         = st.toggle("SMOTE Oversampling",    value=True)
@@ -352,12 +352,11 @@ if page == "🏠 Overview":
     st.markdown("---")
 
     best_r = max(results, key=lambda r: r["f1"])
-    c1, c2, c3, c4, c5 = st.columns(5)
+    c1, c2, c3, c4 = st.columns(4)
     c1.metric("🏆 Best Model",    best_r["model"].split("(")[0].strip())
     c2.metric("🎯 Best F1",       f"{best_r['f1']:.4f}")
     c3.metric("📡 Best AUC",      f"{best_r['auc']:.4f}")
-    c4.metric("📦 Train Samples", f"{len(X_train_sc):,}")
-    c5.metric("🧪 Test Samples",  f"{len(X_test_sc):,}")
+    c4.metric("✅ Best Accuracy", f"{best_r['accuracy']:.4f}")
 
     st.markdown("---")
     st.markdown('<div class="section-header"><b>All Models at a Glance</b></div>', unsafe_allow_html=True)
@@ -389,56 +388,6 @@ if page == "🏠 Overview":
 elif page == "📊 Data & SMOTE":
     st.markdown("# 📊 Data Overview & SMOTE")
     df_res = data["df_res"]
-    orig   = data["original_counts"]
-    res_   = data["resampled_counts"]
-
-    col1, col2 = st.columns(2)
-    with col1:
-        st.markdown('<div class="section-header"><b>Class Distribution Before / After SMOTE</b></div>', unsafe_allow_html=True)
-        fig, ax = plt.subplots(figsize=(6, 4))
-        x = np.arange(2); w = 0.35
-        ax.bar(x - w/2, orig, w, label="Original",    color="#64ffda", alpha=0.8)
-        ax.bar(x + w/2, res_, w, label="After SMOTE", color="#ff6b9d", alpha=0.8)
-        ax.set_xticks(x); ax.set_xticklabels(["Unsatisfied", "Satisfied"])
-        ax.legend(); ax.set_title("Class Imbalance Before and After SMOTE")
-        for i, (o, r) in enumerate(zip(orig, res_)):
-            ax.text(i - w/2, o + 10, str(o), ha="center", va="bottom", fontsize=8)
-            ax.text(i + w/2, r + 10, str(r), ha="center", va="bottom", fontsize=8)
-        st.pyplot(fig); plt.close()
-
-    with col2:
-        st.markdown('<div class="section-header"><b>Satisfaction by Loyalty × Class</b></div>', unsafe_allow_html=True)
-        hm = df_res.pivot_table(index="loyalty_group", columns="class_group",
-                                values="satisfaction", aggfunc="mean") * 100
-        fig, ax = plt.subplots(figsize=(6, 4))
-        sns.heatmap(hm, annot=True, cmap="RdYlGn", fmt=".1f", ax=ax,
-                    linewidths=0.5, cbar_kws={"label": "Satisfaction %"})
-        ax.set_title("Satisfaction Rate (%) by Loyalty & Class")
-        st.pyplot(fig); plt.close()
-
-    st.markdown("---")
-    col3, col4 = st.columns(2)
-    with col3:
-        st.markdown('<div class="section-header"><b>Satisfaction by Loyalty</b></div>', unsafe_allow_html=True)
-        gm = df_res.groupby("loyalty_group")["satisfaction"].mean() * 100
-        fig, ax = plt.subplots(figsize=(6, 4))
-        ax.bar(gm.index, gm.values, color=["#64ffda", "#ff6b9d"])
-        ax.set_ylim(0, 100); ax.set_ylabel("Satisfaction Rate (%)")
-        ax.set_title("Satisfaction by Customer Loyalty")
-        for i, v in enumerate(gm.values): ax.text(i, v + 1, f"{v:.1f}%", ha="center")
-        st.pyplot(fig); plt.close()
-
-    with col4:
-        st.markdown('<div class="section-header"><b>Satisfaction by Class</b></div>', unsafe_allow_html=True)
-        cm2 = df_res.groupby("class_group")["satisfaction"].mean() * 100
-        fig, ax = plt.subplots(figsize=(6, 4))
-        ax.bar(cm2.index, cm2.values, color=["#ffd166", "#a78bfa"])
-        ax.set_ylim(0, 100); ax.set_ylabel("Satisfaction Rate (%)")
-        ax.set_title("Satisfaction by Cabin Class")
-        for i, v in enumerate(cm2.values): ax.text(i, v + 1, f"{v:.1f}%", ha="center")
-        st.pyplot(fig); plt.close()
-
-    st.markdown("---")
     st.markdown('<div class="section-header"><b>Feature Distributions</b></div>', unsafe_allow_html=True)
     feature_sel = st.selectbox("Select feature to explore", FEATURES)
     delay_note = ""
@@ -457,37 +406,8 @@ elif page == "📊 Data & SMOTE":
 elif page == "📈 Model Metrics":
     st.markdown("# 📈 Model Performance Metrics")
 
-    sort_metric = st.selectbox("Sort models by", ["f1", "accuracy", "precision", "recall", "auc", "specificity"])
-    sorted_results = sorted(results, key=lambda r: r[sort_metric], reverse=True)
-
-    for r, color in zip(sorted_results, COLORS):
-        with st.expander(
-            f"{'🥇' if r == sorted_results[0] else '📊'} {r['model']} — F1: {r['f1']:.4f}  |  AUC: {r['auc']:.4f}",
-            expanded=(r == sorted_results[0])
-        ):
-            c1, c2, c3, c4, c5, c6 = st.columns(6)
-            c1.metric("Accuracy",    f"{r['accuracy']:.4f}")
-            c2.metric("Precision",   f"{r['precision']:.4f}")
-            c3.metric("Recall",      f"{r['recall']:.4f}")
-            c4.metric("F1 Score",    f"{r['f1']:.4f}")
-            c5.metric("ROC AUC",     f"{r['auc']:.4f}")
-            c6.metric("Specificity", f"{r['specificity']:.4f}")
-
     st.markdown("---")
-    st.markdown('<div class="section-header"><b>Performance Heatmap</b></div>', unsafe_allow_html=True)
-    metrics = ["accuracy", "precision", "recall", "f1", "auc", "specificity"]
-    df_heat = pd.DataFrame(
-        [[r[m] for m in metrics] for r in results],
-        columns=[m.title() for m in metrics], index=MODEL_NAMES
-    )
-    fig, ax = plt.subplots(figsize=(10, 3))
-    sns.heatmap(df_heat, annot=True, fmt=".4f", cmap="YlGnBu", ax=ax, vmin=0.5, vmax=1, linewidths=0.5)
-    ax.set_title("Model Performance Heatmap")
-    st.pyplot(fig); plt.close()
-
-    # ── Drift chart with metric multiselect ──
-    st.markdown("---")
-    st.markdown('<div class="section-header"><b>Train vs Test Performance Drift</b></div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-header"><b>Drift Line Chart</b></div>', unsafe_allow_html=True)
 
     METRIC_OPTIONS = ["accuracy", "precision", "recall", "f1", "auc", "specificity"]
     selected_metrics = st.multiselect(
@@ -617,16 +537,6 @@ elif page == "🧩 Confusion Matrices":
     fig.suptitle("Confusion Matrices — All Models", color="#ccd6f6", fontsize=14)
     plt.tight_layout(); st.pyplot(fig); plt.close()
 
-    st.markdown("---")
-    st.markdown('<div class="section-header"><b>Detailed Breakdown</b></div>', unsafe_allow_html=True)
-    model_sel = st.selectbox("Select model for details", MODEL_NAMES)
-    r_sel = next(r for r in results if r["model"] == model_sel)
-    tn, fp, fn, tp = r_sel["cm"].ravel()
-    c1, c2, c3, c4 = st.columns(4)
-    c1.metric("✅ True Positives",  tp)
-    c2.metric("✅ True Negatives",  tn)
-    c3.metric("❌ False Positives", fp)
-    c4.metric("❌ False Negatives", fn)
 
 # ══════════════════════════════════════════════════════════════════
 # FEATURE IMPORTANCE
@@ -690,12 +600,6 @@ elif page == "🔬 Feature Importance":
 # ══════════════════════════════════════════════════════════════════
 elif page == "🧠 LIME Explanations":
     st.markdown("# 🧠 LIME — Local Interpretable Model Explanations")
-    st.markdown(
-        "LIME fits a simple linear model around a single test instance to reveal which "
-        "features pushed the prediction toward *Satisfied* or *Unsatisfied*. "
-        "Green bars push toward Satisfied, red bars push toward Unsatisfied."
-    )
-    st.markdown("---")
 
     col_ctrl1, col_ctrl2 = st.columns([1, 2])
     with col_ctrl1:
