@@ -394,7 +394,7 @@ elif page == "📊 Data & SMOTE":
     if log_transform_on and feature_sel in ("departure_delay_in_minutes", "arrival_delay_in_minutes"):
         delay_note = " *(log1p transformed)*"
     fig, ax = plt.subplots(figsize=(10, 4))
-    for sat_val, color, label in [(0, "#ff6b9d", "Unsatisfied"), (1, "#64ffda", "Satisfied")]:
+    for sat_val, color, label in [(0, "#F97316", "Unsatisfied"), (1, "#22C55E", "Satisfied")]:
         ax.hist(df_res[df_res["satisfaction"] == sat_val][feature_sel], bins=30, alpha=0.6, color=color, label=label)
     ax.set_xlabel(feature_sel + delay_note); ax.set_ylabel("Count")
     ax.set_title(f"Distribution of {feature_sel}{delay_note} by Satisfaction"); ax.legend()
@@ -446,7 +446,7 @@ elif page == "📈 Model Metrics":
                 test_scores[m].append(compute_metric(m, y_test, y_te_pred, y_te_prob))
 
         x = np.arange(len(MODEL_NAMES))
-        palette      = ["#64ffda", "#ff6b9d", "#ffd166", "#a78bfa", "#fb923c", "#38bdf8"]
+        palette = ["#4F46E5", "#22C55E", "#F97316", "#A855F7", "#0EA5E9", "#EAB308"]
         line_styles  = ["-", "--", "-.", ":", (0,(3,1,1,1)), (0,(5,2))]
         marker_shapes = ["o", "s", "D", "^", "v", "P"]
 
@@ -575,8 +575,8 @@ elif page == "🔬 Feature Importance":
         angles = np.linspace(0, 2*np.pi, 5, endpoint=False).tolist() + [0]
         fig = plt.figure(figsize=(5, 5))
         ax  = fig.add_subplot(111, polar=True)
-        ax.plot(angles, vals, color="#64ffda", linewidth=2)
-        ax.fill(angles, vals, alpha=0.25, color="#64ffda")
+        ax.plot(angles, vals, color="#4F46E5", linewidth=2)
+        ax.fill(angles, vals, alpha=0.25, color="#4F46E5")
         ax.set_xticks(angles[:-1]); ax.set_xticklabels(top5_feats, fontsize=8)
         ax.set_title("Top 5 Features (Avg)", y=1.1, color="#ccd6f6")
         ax.set_facecolor("#1a1f35")
@@ -691,8 +691,8 @@ elif page == "🧠 LIME Explanations":
             st.markdown("---")
             # Class probability mini-bar
             fig2, ax2 = plt.subplots(figsize=(8, 1.8))
-            ax2.barh(["Unsatisfied"], [pred_probs[0]], color="#ff6b9d", alpha=0.8, height=0.4)
-            ax2.barh(["Satisfied"],   [pred_probs[1]], color="#64ffda", alpha=0.8, height=0.4)
+            ax2.barh(["Unsatisfied"], [pred_probs[0]], color="#F97316", alpha=0.8, height=0.4)
+            ax2.barh(["Satisfied"],   [pred_probs[1]], color="#22C55E", alpha=0.8, height=0.4)
             ax2.set_xlim(0, 1); ax2.set_xlabel("Probability"); ax2.set_title("Class Probabilities")
             ax2.axvline(0.5, color="white", linestyle="--", alpha=0.5)
             for i, (lbl, prob) in enumerate([("Unsatisfied", pred_probs[0]), ("Satisfied", pred_probs[1])]):
