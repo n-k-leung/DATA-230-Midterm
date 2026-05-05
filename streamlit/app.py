@@ -140,7 +140,7 @@ def generate_synthetic_data(n_samples=5000, seed=42):
 # PIPELINE
 # ─────────────────────────────────────────────────────────────────
 @st.cache_resource
-def run_pipeline(n_samples, test_size, smote_on, weight_on, log_transform_on, use_best_params, seed):
+def run_pipeline(n_samples, test_size, smote_on, weight_on, log_transform_on, log_passes, use_best_params, seed):
     FEATURES = [
         "flight_distance", "departure_delay_in_minutes", "arrival_delay_in_minutes",
         "seat_comfort", "inflight_wifi_service", "food_and_drink", "inflight_entertainment",
@@ -160,8 +160,9 @@ def run_pipeline(n_samples, test_size, smote_on, weight_on, log_transform_on, us
 
     # Log transformation of delay columns
     if log_transform_on:
-        df["departure_delay_in_minutes"] = np.log1p(df["departure_delay_in_minutes"])
-        df["arrival_delay_in_minutes"]   = np.log1p(df["arrival_delay_in_minutes"])
+        for _ in range(log_passes):
+            df["departure_delay_in_minutes"] = np.log1p(df["departure_delay_in_minutes"])
+            df["arrival_delay_in_minutes"]   = np.log1p(df["arrival_delay_in_minutes"])
 
     X = df[FEATURES].values
     y = df[TARGET].values
@@ -275,7 +276,15 @@ with st.sidebar:
         value=False,
         help="Applies log1p to departure_delay_in_minutes and arrival_delay_in_minutes"
     )
+    log_passes = 1
     if log_transform_on:
+        log_passes = st.slider(
+            "Log Strength (passes)",
+            min_value=1,
+            max_value=3,
+            value=1,
+            help="1 = log1p(x), 2 = log1p(log1p(x)), 3 = log1p(log1p(log1p(x)))"
+        )
         st.markdown("<small style='color:#8892b0'>↳ Applied to departure & arrival delay</small>",
                     unsafe_allow_html=True)
 
@@ -316,7 +325,7 @@ if run_btn or st.session_state.pipeline_data is None:
     with st.spinner("Training models… ⏳"):
         st.session_state.pipeline_data = run_pipeline(
             n_samples, test_size, smote_on, weight_on,
-            log_transform_on, use_best_params, int(seed)
+            log_transform_on, log_passes, use_best_params, int(seed)
         )
 
 data        = st.session_state.pipeline_data
@@ -346,7 +355,7 @@ if page == "🏠 Overview":
     st.markdown("# ✈️ Passenger Satisfaction ML Dashboard")
     st.markdown("*Three-model classification pipeline with SMOTE, sample weighting, and full evaluation suite*")
 
-    log_badge = "✅ On" if log_transform_on else "❌ Off"
+    log_badge = f"✅ On ({log_passes} pass{'es' if log_passes > 1 else ''})" if log_transform_on else "❌ Off"
     hp_badge  = "✅ Best params" if use_best_params else "⚙️ Default params"
     st.markdown(f"**Log Transform:** {log_badge} &nbsp;|&nbsp; **Hyperparameters:** {hp_badge}")
     st.markdown("---")
@@ -392,7 +401,7 @@ elif page == "📊 Data & SMOTE":
     feature_sel = st.selectbox("Select feature to explore", FEATURES)
     delay_note = ""
     if log_transform_on and feature_sel in ("departure_delay_in_minutes", "arrival_delay_in_minutes"):
-        delay_note = " *(log1p transformed)*"
+        delay_note = f" *(log1p x{log_passes})*"
     fig, ax = plt.subplots(figsize=(10, 4))
     for sat_val, color, label in [(0, "#F97316", "Unsatisfied"), (1, "#22C55E", "Satisfied")]:
         ax.hist(df_res[df_res["satisfaction"] == sat_val][feature_sel], bins=30, alpha=0.6, color=color, label=label)
