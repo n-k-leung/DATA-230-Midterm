@@ -359,8 +359,10 @@ if page == "Overview":
     ax.set_xticklabels([m.upper() for m in metrics])
     ax.set_ylim(0, 1.1); ax.set_ylabel("Score")
     ax.set_title("Model Comparison Across Evaluation Metrics")
-    ax.legend(); ax.grid(axis="y")
-    st.pyplot(fig); plt.close()
+    ax.legend(loc="upper left", bbox_to_anchor=(1, 1))
+    plt.tight_layout()
+    st.pyplot(fig)
+    plt.close()
 
 # ══════════════════════════════════════════════════════════════════
 # DATA & SMOTE
