@@ -38,7 +38,6 @@ import lime.lime_tabular
 # ─────────────────────────────────────────────────────────────────
 st.set_page_config(
     page_title="Passenger Satisfaction ML Dashboard",
-    page_icon="✈️",
     layout="wide",
     initial_sidebar_state="expanded"
 )
@@ -352,12 +351,14 @@ if page == "Overview":
 
     st.markdown('<div class="section-header"><b>Model Comparison Bar Chart</b></div>', unsafe_allow_html=True)
     fig, ax = plt.subplots(figsize=(10, 4))
-    x = np.arange(len(metrics)); w = 0.25
+    x = np.arange(len(metrics))
+    w = 0.25
     for i, (r, color) in enumerate(zip(results, COLORS)):
         ax.bar(x + i * w, [r[m] for m in metrics], w, label=r["model"], color=color, alpha=0.85)
     ax.set_xticks(x + w)
     ax.set_xticklabels([m.upper() for m in metrics])
-    ax.set_ylim(0, 1.1); ax.set_ylabel("Score")
+    ax.set_ylim(0, 1.1)
+    ax.set_ylabel("Score")
     ax.set_title("Model Comparison Across Evaluation Metrics")
     ax.legend(loc="upper left", bbox_to_anchor=(1, 1))
     plt.tight_layout()
@@ -378,9 +379,12 @@ elif page == "Data & SMOTE":
     fig, ax = plt.subplots(figsize=(10, 4))
     for sat_val, color, label in [(0, "#F97316", "Unsatisfied"), (1, "#22C55E", "Satisfied")]:
         ax.hist(df_res[df_res["satisfaction"] == sat_val][feature_sel], bins=30, alpha=0.6, color=color, label=label)
-    ax.set_xlabel(feature_sel + delay_note); ax.set_ylabel("Count")
-    ax.set_title(f"Distribution of {feature_sel}{delay_note} by Satisfaction"); ax.legend()
-    st.pyplot(fig); plt.close()
+    ax.set_xlabel(feature_sel + delay_note)
+    ax.set_ylabel("Count")
+    ax.set_title(f"Distribution of {feature_sel}{delay_note} by Satisfaction")
+    ax.legend()
+    st.pyplot(fig)
+    plt.close()
 
 # ══════════════════════════════════════════════════════════════════
 # MODEL METRICS
@@ -444,11 +448,15 @@ elif page == "Model Metrics":
             for i in range(len(MODEL_NAMES)):
                 ax.fill_between([i], [test_scores[m][i]], [train_scores[m][i]],
                                 alpha=0.07, color=col)
-        ax.set_xticks(x); ax.set_xticklabels(MODEL_NAMES, rotation=15)
-        ax.set_ylabel("Score"); ax.set_ylim(0, 1.1)
+        ax.set_xticks(x)
+        ax.set_xticklabels(MODEL_NAMES, rotation=15)
+        ax.set_ylabel("Score")
+        ax.set_ylim(0, 1.1)
         ax.set_title("Train vs Test Performance Drift\n(solid = train, hollow = test)")
-        ax.legend(fontsize=8, ncol=2); ax.grid(True)
-        st.pyplot(fig); plt.close()
+        ax.legend(fontsize=8, ncol=2)
+        ax.grid(True)
+        st.pyplot(fig)
+        plt.close()
 
 # ══════════════════════════════════════════════════════════════════
 # ROC & PR CURVES
@@ -465,9 +473,13 @@ elif page == "ROC & PR Curves":
             ax.plot(fpr, tpr, label=f"{r['model'].split('(')[0].strip()} (AUC={r['auc']:.3f})",
                     color=color, linewidth=2)
         ax.plot([0,1],[0,1],"w--",linewidth=1,alpha=0.5)
-        ax.set_xlabel("False Positive Rate"); ax.set_ylabel("True Positive Rate")
-        ax.set_title("ROC Curves"); ax.legend(fontsize=8); ax.grid(True)
-        st.pyplot(fig); plt.close()
+        ax.set_xlabel("False Positive Rate")
+        ax.set_ylabel("True Positive Rate")
+        ax.set_title("ROC Curves")
+        ax.legend(fontsize=8)
+        ax.grid(True)
+        st.pyplot(fig)
+        plt.close()
 
     with col2:
         st.markdown('<div class="section-header"><b>Precision-Recall Curves</b></div>', unsafe_allow_html=True)
@@ -477,9 +489,13 @@ elif page == "ROC & PR Curves":
             ap = average_precision_score(y_test, r["prob"])
             ax.plot(rec, prec, label=f"{r['model'].split('(')[0].strip()} (AP={ap:.3f})",
                     color=color, linewidth=2)
-        ax.set_xlabel("Recall"); ax.set_ylabel("Precision")
-        ax.set_title("Precision-Recall Curves"); ax.legend(fontsize=8); ax.grid(True)
-        st.pyplot(fig); plt.close()
+        ax.set_xlabel("Recall")
+        ax.set_ylabel("Precision")
+        ax.set_title("Precision-Recall Curves")
+        ax.legend(fontsize=8)
+        ax.grid(True)
+        st.pyplot(fig)
+        plt.close()
 
     st.markdown("---")
     st.markdown('<div class="section-header"><b>Threshold Explorer</b></div>', unsafe_allow_html=True)
@@ -549,17 +565,20 @@ elif page == "Confusion Matrices":
     for ax, r, color in zip(axes, results, COLORS):
         sns.heatmap(r["cm"], annot=True, fmt="d", cmap="Purples", ax=ax, linewidths=0.5, cbar=False)
         ax.set_title(r["model"], color=color)
-        ax.set_xlabel("Predicted", color="#8892b0"); ax.set_ylabel("Actual", color="#8892b0")
+        ax.set_xlabel("Predicted", color="#8892b0")
+        ax.set_ylabel("Actual", color="#8892b0")
         ax.set_xticklabels(["Unsatisfied", "Satisfied"], rotation=30)
         ax.set_yticklabels(["Unsatisfied", "Satisfied"], rotation=0)
-    plt.tight_layout(); st.pyplot(fig); plt.close()
+    plt.tight_layout()
+    st.pyplot(fig)
+    plt.close()
 
 
 # ══════════════════════════════════════════════════════════════════
 # FEATURE IMPORTANCE
 # ══════════════════════════════════════════════════════════════════
 elif page == "Feature Importance":
-    st.markdown("# Feature Importance (Permutation)")
+    st.markdown("# Feature Importance")
 
     with st.spinner("Computing permutation importances…"):
         all_imps = []
@@ -576,11 +595,16 @@ elif page == "Feature Importance":
     st.markdown('<div class="section-header"><b>Per-Model Importance (Top 8)</b></div>', unsafe_allow_html=True)
 
     fig, axes = plt.subplots(1, 3, figsize=(16, 5))
+
     for ax, r, imp, color in zip(axes, results, all_imps, COLORS):
         idx = np.argsort(imp)[::-1][:8]
-        ax.barh([FEATURES[i] for i in idx[::-1]], imp[idx[::-1]], color=color, alpha=0.9)
+        ax.barh([FEATURES[i] for i in idx[::-1]], imp[idx[::-1]],
+                color=color, alpha=0.9)
+
         ax.set_title(r["model"].split("(")[0].strip(), color=color)
         ax.set_xlabel("Mean Importance")
+        ax.grid(axis="x", linestyle="--", alpha=0.5)
+
     plt.tight_layout()
     st.pyplot(fig)
     plt.close()
@@ -599,7 +623,10 @@ elif page == "Feature Importance":
     ax.set_xticks(angles[:-1])
     ax.set_xticklabels(top5_feats, fontsize=10)
     ax.set_facecolor("#f0f0f0")
-    st.pyplot(fig)
+    col1, col2, col3 = st.columns([1, 2, 1])
+
+    with col2:
+        st.pyplot(fig, use_container_width=False)
     plt.close()
 
     st.markdown("---")
@@ -694,7 +721,7 @@ elif page == "LIME Explanations":
 
             fig, ax = plt.subplots(figsize=(10, max(4, len(feat_names_s) * 0.55)))
             bars = ax.barh(feat_names_s, weights_s, color=bar_colors, alpha=0.85, edgecolor="#3d4663")
-            ax.axvline(0, color="#111827", linewidth=1, alpha=0.6)
+            ax.axvline(0, color="#1f2937", linewidth=1, alpha=0.6)
             ax.set_xlabel("LIME Weight  (positive → Satisfied, negative → Unsatisfied)")
             ax.set_title(
                 f"LIME Explanation — {r['model']}\n"
@@ -706,18 +733,25 @@ elif page == "LIME Explanations":
                 ax.text(xpos, bar.get_y() + bar.get_height() / 2,
                         f"{w:+.4f}", va="center", ha=ha, fontsize=8, color="#111827")
             ax.grid(axis="x", alpha=0.4)
+            ax.tick_params(axis='y', pad=10)
+            xmin, xmax = ax.get_xlim()
+            ax.set_xlim(xmin - 0.02, xmax + 0.02)
             plt.tight_layout()
-            st.pyplot(fig); plt.close()
+            st.pyplot(fig)
+            plt.close()
 
             st.markdown("---")
             # Class probability mini-bar
             fig2, ax2 = plt.subplots(figsize=(8, 1.8))
             ax2.barh(["Unsatisfied"], [pred_probs[0]], color="#F97316", alpha=0.8, height=0.4)
             ax2.barh(["Satisfied"],   [pred_probs[1]], color="#22C55E", alpha=0.8, height=0.4)
-            ax2.set_xlim(0, 1); ax2.set_xlabel("Probability"); ax2.set_title("Class Probabilities")
-            ax2.axvline(0.5, color="white", linestyle="--", alpha=0.5)
+            ax2.set_xlim(0, 1)
+            ax2.set_xlabel("Probability")
+            ax2.set_title("Class Probabilities")
+            ax2.axvline(0.5, color="#374151", linestyle="--", alpha=0.5)
             for i, (lbl, prob) in enumerate([("Unsatisfied", pred_probs[0]), ("Satisfied", pred_probs[1])]):
-                ax2.text(prob + 0.01, i, f"{prob:.1%}", va="center", fontsize=9, color="#ccd6f6")
+                ax2.text(prob + 0.01, i, f"{prob:.1%}", va="center", fontsize=9, color="#1f2937")
             ax2.grid(axis="x", alpha=0.3)
             plt.tight_layout()
-            st.pyplot(fig2); plt.close()
+            st.pyplot(fig2)
+            plt.close()
