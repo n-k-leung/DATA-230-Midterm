@@ -337,11 +337,11 @@ if page == "Overview":
     st.markdown("---")
 
     best_r = max(results, key=lambda r: r["f1"])
-    c1, c2, c3, c4 = st.columns(4)
-    c1.metric("Best Model",    best_r["model"].split("(")[0].strip())
-    c2.metric("Best F1",       f"{best_r['f1']:.4f}")
-    c3.metric("Best AUC",      f"{best_r['auc']:.4f}")
-    c4.metric("Best Accuracy", f"{best_r['accuracy']:.4f}")
+    st.metric("Best Model", best_r["model"].split("(")[0].strip())
+    c1, c2, c3 = st.columns(3)
+    c1.metric("Best F1",       f"{best_r['f1']:.4f}")
+    c2.metric("Best AUC",      f"{best_r['auc']:.4f}")
+    c3.metric("Best Accuracy", f"{best_r['accuracy']:.4f}")
 
     st.markdown("---")
     st.markdown('<div class="section-header"><b>All Models at a Glance</b></div>', unsafe_allow_html=True)
