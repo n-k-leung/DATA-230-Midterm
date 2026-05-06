@@ -116,8 +116,8 @@ class WeightedLDA(BaseEstimator, ClassifierMixin):
 # ─────────────────────────────────────────────────────────────────
 BEST_PARAMS = {
     "Hist Gradient Boosting": {"max_iter": 300, "max_depth": 7, "learning_rate": 0.1},
-    "Neural Network (MLP)":   {"hidden_layer_sizes": (100, 50), "alpha": 0.001},
-    "LDA":                    {"solver": "lsqr", "shrinkage": None},
+    "Multi-layer Perceptron":   {"hidden_layer_sizes": (100, 50), "alpha": 0.001},
+    "Linear Discriminant Analysis": {"solver": "lsqr", "shrinkage": None},
 }
 
 
@@ -196,14 +196,14 @@ def run_pipeline(n_samples, test_size, smote_on, weight_on, log_transform_on, us
     if use_best_params:
         models = {
             "Hist Gradient Boosting": HistGradientBoostingClassifier(**BEST_PARAMS["Hist Gradient Boosting"]),
-            "Neural Network (MLP)":   MLPClassifier(max_iter=500, **BEST_PARAMS["Neural Network (MLP)"]),
-            "LDA":                    WeightedLDA(**BEST_PARAMS["LDA"]),
+            "Multi-layer Perceptron":   MLPClassifier(max_iter=500, **BEST_PARAMS["Multi-layer Perceptron"]),
+            "Linear Discriminant Analysis":                    WeightedLDA(**BEST_PARAMS["Linear Discriminant Analysis"]),
         }
     else:
         models = {
             "Hist Gradient Boosting": HistGradientBoostingClassifier(),
-            "Neural Network (MLP)":   MLPClassifier(max_iter=500),
-            "LDA":                    WeightedLDA(),
+            "Multi-layer Perceptron":   MLPClassifier(max_iter=500),
+            "Linear Discriminant Analysis": WeightedLDA(),
         }
 
     def evaluate(name, model):
@@ -254,10 +254,10 @@ with st.sidebar:
 
     st.markdown("### Pipeline Options")
     smote_on         = st.toggle("SMOTE Oversampling",    value=True)
-    weight_on        = st.toggle("Domain Sample Weights", value=True)
+    weight_on        = st.toggle("Domain Sample Weights", value=False)
     log_transform_on = st.toggle(
         "Log Transformation",
-        value=False,
+        value=True,
         help="Applies log1p to departure_delay_in_minutes and arrival_delay_in_minutes"
     )
     if log_transform_on:
@@ -267,7 +267,7 @@ with st.sidebar:
     st.markdown("### Hyperparameter Tuning")
     use_best_params = st.toggle(
         "Best Hyperparameters",
-        value=False,
+        value=True,
         help="OFF = sklearn defaults  |  ON = pre-tuned best params"
     )
     if use_best_params:
@@ -329,11 +329,6 @@ plt.rcParams.update({
 # ══════════════════════════════════════════════════════════════════
 if page == "Overview":
     st.markdown("# Passenger Satisfaction ML Dashboard")
-    st.markdown("*Three-model classification pipeline with SMOTE, sample weighting, and full evaluation suite*")
-
-    log_badge = "On" if log_transform_on else "Off"
-    hp_badge  = "Best params" if use_best_params else "Default params"
-    st.markdown(f"**Log Transform:** {log_badge} &nbsp;|&nbsp; **Hyperparameters:** {hp_badge}")
     st.markdown("---")
 
     best_r = max(results, key=lambda r: r["f1"])
@@ -555,7 +550,6 @@ elif page == "Confusion Matrices":
         ax.set_xlabel("Predicted", color="#8892b0"); ax.set_ylabel("Actual", color="#8892b0")
         ax.set_xticklabels(["Unsatisfied", "Satisfied"], rotation=30)
         ax.set_yticklabels(["Unsatisfied", "Satisfied"], rotation=0)
-    fig.suptitle("Confusion Matrices — All Models", color="#ccd6f6", fontsize=14)
     plt.tight_layout(); st.pyplot(fig); plt.close()
 
 
@@ -596,14 +590,13 @@ elif page == "Feature Importance":
     vals = top5_vals.tolist() + [top5_vals[0]]
     angles = np.linspace(0, 2 * np.pi, 5, endpoint=False).tolist() + [0]
 
-    fig = plt.figure(figsize=(7, 7))
+    fig = plt.figure(figsize=(5, 5))
     ax = fig.add_subplot(111, polar=True)
     ax.plot(angles, vals, color="#4F46E5", linewidth=2)
     ax.fill(angles, vals, alpha=0.25, color="#4F46E5")
     ax.set_xticks(angles[:-1])
     ax.set_xticklabels(top5_feats, fontsize=10)
-    ax.set_title("Top 5 Features (Avg)", y=1.1, color="#ccd6f6")
-    ax.set_facecolor("#1a1f35")
+    ax.set_facecolor("#f0f0f0")
     st.pyplot(fig)
     plt.close()
 
