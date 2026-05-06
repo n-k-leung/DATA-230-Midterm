@@ -120,43 +120,6 @@ BEST_PARAMS = {
     "LDA":                    {"solver": "lsqr", "shrinkage": None},
 }
 
-# ─────────────────────────────────────────────────────────────────
-# SYNTHETIC DATA
-# ─────────────────────────────────────────────────────────────────
-@st.cache_data
-def generate_synthetic_data(n_samples=5000, seed=42):
-    rng = np.random.RandomState(seed)
-    n = n_samples
-    gender        = rng.choice(["Male", "Female"], n)
-    customer_type = rng.choice(["Loyal Customer", "disloyal Customer"], n, p=[0.7, 0.3])
-    flight_class  = rng.choice(["Business", "Eco", "Eco Plus"], n, p=[0.45, 0.45, 0.1])
-    age            = rng.randint(15, 75, n)
-    flight_distance = rng.randint(50, 5000, n)
-    dep_delay       = np.where(rng.random(n) < 0.2, rng.randint(1, 300, n), 0)
-    arr_delay       = dep_delay + rng.randint(-5, 30, n).clip(0)
-    ratings = {col: rng.randint(1, 6, n) for col in [
-        "seat_comfort", "inflight_wifi_service", "food_and_drink",
-        "inflight_entertainment", "ease_of_online_booking",
-        "online_boarding", "online_support"
-    ]}
-    base = (
-        (flight_class == "Business") * 0.3 +
-        (customer_type == "Loyal Customer") * 0.2 +
-        ratings["seat_comfort"] * 0.05 +
-        ratings["inflight_entertainment"] * 0.05 +
-        ratings["inflight_wifi_service"] * 0.04 +
-        ratings["online_boarding"] * 0.04 +
-        (dep_delay < 15) * 0.1 +
-        rng.normal(0, 0.15, n)
-    )
-    satisfaction = (base > 0.6).astype(int)
-    return pd.DataFrame({
-        "gender": gender, "customer_type": customer_type, "class": flight_class,
-        "age": age, "flight_distance": flight_distance,
-        "departure_delay_in_minutes": dep_delay,
-        "arrival_delay_in_minutes":   arr_delay,
-        **ratings, "satisfaction": satisfaction
-    })
 
 # ─────────────────────────────────────────────────────────────────
 # PIPELINE
@@ -171,7 +134,7 @@ def run_pipeline(n_samples, test_size, smote_on, weight_on, log_transform_on, us
     ]
     TARGET = "satisfaction"
 
-    df = generate_synthetic_data(n_samples, seed)
+    df = pd.read_csv("passenger_satisfaction_cleaned.csv")
 
     le_gender   = LabelEncoder()
     le_customer = LabelEncoder()
@@ -355,9 +318,9 @@ MODEL_NAMES = [r["model"] for r in results]
 plt.rcParams.update({
     "figure.facecolor": "#ffffff", "axes.facecolor": "#ffffff",
     "axes.edgecolor":   "#3d4663", "axes.labelcolor": "#8892b0",
-    "text.color":       "#ccd6f6", "xtick.color": "#8892b0",
-    "ytick.color":      "#8892b0", "grid.color": "#2d3461",
-    "grid.alpha": 0.5,  "legend.facecolor": "#1a1f35",
+    "text.color": "#111827", "xtick.color": "#374151",
+    "ytick.color": "#374151", "grid.color": "#2d3461",
+    "grid.alpha": 0.5,  "legend.facecolor": "#ffffff",
     "legend.edgecolor": "#3d4663",
 })
 
@@ -701,7 +664,7 @@ elif page == "LIME Explanations":
 
             fig, ax = plt.subplots(figsize=(10, max(4, len(feat_names_s) * 0.55)))
             bars = ax.barh(feat_names_s, weights_s, color=bar_colors, alpha=0.85, edgecolor="#3d4663")
-            ax.axvline(0, color="#ccd6f6", linewidth=1, alpha=0.6)
+            ax.axvline(0, color="#111827", linewidth=1, alpha=0.6)
             ax.set_xlabel("LIME Weight  (positive → Satisfied, negative → Unsatisfied)")
             ax.set_title(
                 f"LIME Explanation — {r['model']}\n"
@@ -711,7 +674,7 @@ elif page == "LIME Explanations":
                 xpos = w + (0.001 if w >= 0 else -0.001)
                 ha   = "left" if w >= 0 else "right"
                 ax.text(xpos, bar.get_y() + bar.get_height() / 2,
-                        f"{w:+.4f}", va="center", ha=ha, fontsize=8, color="#ccd6f6")
+                        f"{w:+.4f}", va="center", ha=ha, fontsize=8, color="#111827")
             ax.grid(axis="x", alpha=0.4)
             plt.tight_layout()
             st.pyplot(fig); plt.close()
