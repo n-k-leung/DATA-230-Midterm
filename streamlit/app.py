@@ -134,7 +134,7 @@ def run_pipeline(n_samples, test_size, smote_on, weight_on, log_transform_on, us
     ]
     TARGET = "satisfaction"
 
-    df = pd.read_csv("passenger_satisfaction_cleaned.csv")
+    df = pd.read_csv("dataset/passenger_satisfaction_cleaned.csv")
 
     le_gender   = LabelEncoder()
     le_customer = LabelEncoder()
