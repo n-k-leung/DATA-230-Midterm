@@ -1,13 +1,3 @@
-"""
-Passenger Satisfaction Classification Dashboard
-Interactive Streamlit app — updated with:
-  - Log transformation pipeline option (delay columns)
-  - Best hyperparameters toggle (no search)
-  - LIME explainability page
-  - Metric multiselect for drift chart
-  - Predict New Passenger page removed
-"""
-
 import warnings
 warnings.filterwarnings("ignore")
 
@@ -33,9 +23,7 @@ from imblearn.over_sampling import SMOTE
 import lime
 import lime.lime_tabular
 
-# ─────────────────────────────────────────────────────────────────
 # PAGE CONFIG
-# ─────────────────────────────────────────────────────────────────
 st.set_page_config(
     page_title="Passenger Satisfaction ML Dashboard",
     layout="wide",
@@ -86,9 +74,7 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# ─────────────────────────────────────────────────────────────────
 # WEIGHTED LDA
-# ─────────────────────────────────────────────────────────────────
 class WeightedLDA(BaseEstimator, ClassifierMixin):
     def __init__(self, solver="svd", shrinkage=None):
         self.solver = solver
@@ -109,20 +95,14 @@ class WeightedLDA(BaseEstimator, ClassifierMixin):
     def predict_proba(self, X):  return self.model_.predict_proba(X)
     def score(self, X, y):       return self.model_.score(X, y)
 
-
-# ─────────────────────────────────────────────────────────────────
-# BEST HYPERPARAMETERS (from tuning run)
-# ─────────────────────────────────────────────────────────────────
+# BEST HYPERPARAMETERS
 BEST_PARAMS = {
     "Hist Gradient Boosting": {"max_iter": 300, "max_depth": 7, "learning_rate": 0.1},
     "Multi-layer Perceptron":   {"hidden_layer_sizes": (100, 50), "alpha": 0.001},
     "Linear Discriminant Analysis": {"solver": "lsqr", "shrinkage": None},
 }
 
-
-# ─────────────────────────────────────────────────────────────────
 # PIPELINE
-# ─────────────────────────────────────────────────────────────────
 @st.cache_resource
 def run_pipeline(n_samples, test_size, smote_on, weight_on, log_transform_on, use_best_params, seed):
     FEATURES = [
@@ -238,10 +218,8 @@ def run_pipeline(n_samples, test_size, smote_on, weight_on, log_transform_on, us
         "df_res": df_res,
         "best_models": {r["model"]: r["model_obj"] for r in results},
     }
-
-# ─────────────────────────────────────────────────────────────────
+    
 # SIDEBAR
-# ─────────────────────────────────────────────────────────────────
 with st.sidebar:
     st.markdown("## Dashboard Controls")
     st.markdown("---")
@@ -290,9 +268,7 @@ with st.sidebar:
         "LIME Explanations",
     ], label_visibility="collapsed")
 
-# ─────────────────────────────────────────────────────────────────
 # RUN PIPELINE
-# ─────────────────────────────────────────────────────────────────
 if "pipeline_data" not in st.session_state:
     st.session_state.pipeline_data = None
 
@@ -323,9 +299,7 @@ plt.rcParams.update({
     "legend.edgecolor": "#3d4663",
 })
 
-# ══════════════════════════════════════════════════════════════════
 # OVERVIEW
-# ══════════════════════════════════════════════════════════════════
 if page == "Overview":
     st.markdown("# Passenger Satisfaction ML Dashboard")
     st.markdown("---")
@@ -365,9 +339,7 @@ if page == "Overview":
     st.pyplot(fig)
     plt.close()
 
-# ══════════════════════════════════════════════════════════════════
 # DATA & SMOTE
-# ══════════════════════════════════════════════════════════════════
 elif page == "Data & SMOTE":
     st.markdown("# Data Overview & SMOTE")
     df_res = data["df_res"]
@@ -386,9 +358,7 @@ elif page == "Data & SMOTE":
     st.pyplot(fig)
     plt.close()
 
-# ══════════════════════════════════════════════════════════════════
 # MODEL METRICS
-# ══════════════════════════════════════════════════════════════════
 elif page == "Model Metrics":
     st.markdown("# Model Performance Metrics")
 
@@ -458,9 +428,7 @@ elif page == "Model Metrics":
         st.pyplot(fig)
         plt.close()
 
-# ══════════════════════════════════════════════════════════════════
 # ROC & PR CURVES
-# ══════════════════════════════════════════════════════════════════
 elif page == "ROC & PR Curves":
     st.markdown("# ROC & Precision-Recall Curves")
 
@@ -555,9 +523,7 @@ elif page == "ROC & PR Curves":
 
     st.caption(f"Best threshold (with Youden’s J): {best_thresh:.3f}, maximizes balance between Sensitivity and Specificity")
 
-# ══════════════════════════════════════════════════════════════════
 # CONFUSION MATRICES
-# ══════════════════════════════════════════════════════════════════
 elif page == "Confusion Matrices":
     st.markdown("# Confusion Matrices")
 
@@ -573,10 +539,7 @@ elif page == "Confusion Matrices":
     st.pyplot(fig)
     plt.close()
 
-
-# ══════════════════════════════════════════════════════════════════
 # FEATURE IMPORTANCE
-# ══════════════════════════════════════════════════════════════════
 elif page == "Feature Importance":
     st.markdown("# Feature Importance")
 
@@ -645,9 +608,8 @@ elif page == "Feature Importance":
                     .background_gradient(subset=["Avg Importance"], cmap="coolwarm"),
         use_container_width=True
     )
-# ══════════════════════════════════════════════════════════════════
+    
 # LIME EXPLANATIONS
-# ══════════════════════════════════════════════════════════════════
 elif page == "LIME Explanations":
     st.markdown("# LIME — Local Interpretable Model Explanations")
 
@@ -665,14 +627,13 @@ elif page == "LIME Explanations":
         true_label = y_test[instance_idx]
         label_str  = "Satisfied" if true_label == 1 else "Unsatisfied"
         st.markdown(f"""
-<div style="background:#E7ECF6;
-            border:1px solid #4F46E5;border-radius:12px;padding:20px;margin-top:8px;">
-  <p style="color:#334155;margin:0;font-size:0.85rem;letter-spacing:.04em;">TRUE LABEL</p>
-  <h2 style="color:#1E293B;margin:6px 0 4px 0;font-weight:700;">{label_str}</h2>
-  <p style="color:#475569;margin:0;font-size:0.8rem;">Instance #{instance_idx} of {len(X_test_sc)}</p>
-</div>""", unsafe_allow_html=True)
+            <div style="background:#E7ECF6;
+                        border:1px solid #4F46E5;border-radius:12px;padding:20px;margin-top:8px;">
+            <p style="color:#334155;margin:0;font-size:0.85rem;letter-spacing:.04em;">TRUE LABEL</p>
+            <h2 style="color:#1E293B;margin:6px 0 4px 0;font-weight:700;">{label_str}</h2>
+            <p style="color:#475569;margin:0;font-size:0.8rem;">Instance #{instance_idx} of {len(X_test_sc)}</p>
+            </div>""", unsafe_allow_html=True)
 
-    # Build / cache LIME explainer
     cache_key = f"lime_explainer_{X_train_sc.shape}"
     if cache_key not in st.session_state:
         with st.spinner("Building LIME explainer…"):
@@ -688,7 +649,6 @@ elif page == "LIME Explanations":
 
     instance = X_test_sc[instance_idx]
 
-    # One tab per model
     tab_labels = []
     for r in results:
         tab_labels.append(r["model"])
@@ -741,7 +701,6 @@ elif page == "LIME Explanations":
             plt.close()
 
             st.markdown("---")
-            # Class probability mini-bar
             fig2, ax2 = plt.subplots(figsize=(8, 1.8))
             ax2.barh(["Unsatisfied"], [pred_probs[0]], color="#F97316", alpha=0.8, height=0.4)
             ax2.barh(["Satisfied"],   [pred_probs[1]], color="#22C55E", alpha=0.8, height=0.4)
