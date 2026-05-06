@@ -486,25 +486,61 @@ elif page == "ROC & PR Curves":
 
     st.markdown("---")
     st.markdown('<div class="section-header"><b>Threshold Explorer</b></div>', unsafe_allow_html=True)
+
     model_sel = st.selectbox("Select model", MODEL_NAMES)
     r_sel = next(r for r in results if r["model"] == model_sel)
+
     thresh = st.slider("Decision Threshold", 0.1, 0.9, 0.5, 0.01)
+
     y_pred_thresh = (r_sel["prob"] >= thresh).astype(int)
+
+    precision = precision_score(y_test, y_pred_thresh, zero_division=0)
+    recall = recall_score(y_test, y_pred_thresh, zero_division=0)
+    f1 = f1_score(y_test, y_pred_thresh, zero_division=0)
+    acc = accuracy_score(y_test, y_pred_thresh)
+
+    tn, fp, fn, tp = confusion_matrix(y_test, y_pred_thresh).ravel()
+    specificity = tn / (tn + fp) if (tn + fp) > 0 else 0
+
     c1, c2, c3, c4 = st.columns(4)
-    c1.metric("Precision", f"{precision_score(y_test, y_pred_thresh, zero_division=0):.4f}")
-    c2.metric("Recall",    f"{recall_score(y_test, y_pred_thresh, zero_division=0):.4f}")
-    c3.metric("F1",        f"{f1_score(y_test, y_pred_thresh, zero_division=0):.4f}")
-    c4.metric("Accuracy",  f"{accuracy_score(y_test, y_pred_thresh):.4f}")
+    c1.metric("Sensitivity", f"{recall:.4f}")
+    c2.metric("Specificity", f"{specificity:.4f}")
+    c3.metric("F1", f"{f1:.4f}")
+    c4.metric("Accuracy", f"{acc:.4f}")
 
     fig, ax = plt.subplots(figsize=(10, 3))
     fpr, tpr, thresholds = roc_curve(y_test, r_sel["prob"])
+
     ax.plot(fpr, tpr, color=COLORS[MODEL_NAMES.index(model_sel)], linewidth=2)
+
+    # Current threshold point that user updates
     idx = np.argmin(np.abs(thresholds - thresh))
-    ax.scatter([fpr[idx]], [tpr[idx]], color="#ffd166", s=100, zorder=5, label=f"Threshold={thresh:.2f}")
+    ax.scatter([fpr[idx]], [tpr[idx]], color="#ffd166", s=100, zorder=5,
+            label=f"Selected threshold={thresh:.2f}")
+
+    # Youden's J to calc best threshold
+    sens = tpr
+    spec = 1 - fpr
+    youden_j = sens + spec - 1
+    best_idx = np.argmax(youden_j)
+    best_thresh = thresholds[best_idx]
+
+    # Best threshold point to display
+    ax.scatter([fpr[best_idx]], [tpr[best_idx]],
+            color="cyan", s=100, zorder=5,
+            label=f"Best threshold={best_thresh:.2f}")
+
     ax.plot([0,1],[0,1],"w--",alpha=0.5)
-    ax.set_xlabel("FPR"); ax.set_ylabel("TPR")
-    ax.set_title(f"ROC — {model_sel}"); ax.legend(); ax.grid(True)
-    st.pyplot(fig); plt.close()
+    ax.set_xlabel("FPR")
+    ax.set_ylabel("TPR")
+    ax.set_title(f"ROC — {model_sel}")
+    ax.legend()
+    ax.grid(True)
+
+    st.pyplot(fig)
+    plt.close()
+
+    st.caption(f"Best threshold (with Youden’s J): {best_thresh:.3f}, maximizes balance between Sensitivity and Specificity")
 
 # ══════════════════════════════════════════════════════════════════
 # CONFUSION MATRICES
