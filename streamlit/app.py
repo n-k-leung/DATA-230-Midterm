@@ -45,23 +45,45 @@ st.set_page_config(
 
 st.markdown("""
 <style>
-    .main { background-color: #0f1117; }
+    .main { background-color: #ffffff; }
+
+    h1, h2, h3 {
+        color: #111827 !important;
+    }
+
     .stMetric {
         background: linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%);
         border: 1px solid #4F46E5;
         border-radius: 12px;
         padding: 16px;
     }
-    .stMetric label { color: #1e293b !important; font-size: 0.8rem !important; }
-    .stMetric [data-testid="metric-value"] { color: #111827 !important; font-size: 1.5rem !important; }
+
+    .stMetric label {
+        color: #1e293b !important;
+        font-size: 0.8rem !important;
+    }
+
+    .stMetric [data-testid="metric-value"] {
+        color: #111827 !important;
+        font-size: 1.5rem !important;
+    }
+
     .section-header {
-        background: linear-gradient(90deg, #1e293b, transparent);
-        border-left: 4px solid #4F46E5;
+        background: linear-gradient(90deg, #4F46E5, #c7d2fe);
+        color: white;
+        border-left: 4px solid #312e81;
         padding: 8px 16px;
         margin: 24px 0 16px 0;
         border-radius: 0 8px 8px 0;
     }
-    div[data-testid="stSidebar"] { background: #0d1117; }
+
+    .section-header b {
+        color: white !important;
+    }
+
+    div[data-testid="stSidebar"] {
+        background: #f1f5f9;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -98,43 +120,6 @@ BEST_PARAMS = {
     "LDA":                    {"solver": "lsqr", "shrinkage": None},
 }
 
-# ─────────────────────────────────────────────────────────────────
-# SYNTHETIC DATA
-# ─────────────────────────────────────────────────────────────────
-@st.cache_data
-def generate_synthetic_data(n_samples=5000, seed=42):
-    rng = np.random.RandomState(seed)
-    n = n_samples
-    gender        = rng.choice(["Male", "Female"], n)
-    customer_type = rng.choice(["Loyal Customer", "disloyal Customer"], n, p=[0.7, 0.3])
-    flight_class  = rng.choice(["Business", "Eco", "Eco Plus"], n, p=[0.45, 0.45, 0.1])
-    age            = rng.randint(15, 75, n)
-    flight_distance = rng.randint(50, 5000, n)
-    dep_delay       = np.where(rng.random(n) < 0.2, rng.randint(1, 300, n), 0)
-    arr_delay       = dep_delay + rng.randint(-5, 30, n).clip(0)
-    ratings = {col: rng.randint(1, 6, n) for col in [
-        "seat_comfort", "inflight_wifi_service", "food_and_drink",
-        "inflight_entertainment", "ease_of_online_booking",
-        "online_boarding", "online_support"
-    ]}
-    base = (
-        (flight_class == "Business") * 0.3 +
-        (customer_type == "Loyal Customer") * 0.2 +
-        ratings["seat_comfort"] * 0.05 +
-        ratings["inflight_entertainment"] * 0.05 +
-        ratings["inflight_wifi_service"] * 0.04 +
-        ratings["online_boarding"] * 0.04 +
-        (dep_delay < 15) * 0.1 +
-        rng.normal(0, 0.15, n)
-    )
-    satisfaction = (base > 0.6).astype(int)
-    return pd.DataFrame({
-        "gender": gender, "customer_type": customer_type, "class": flight_class,
-        "age": age, "flight_distance": flight_distance,
-        "departure_delay_in_minutes": dep_delay,
-        "arrival_delay_in_minutes":   arr_delay,
-        **ratings, "satisfaction": satisfaction
-    })
 
 # ─────────────────────────────────────────────────────────────────
 # PIPELINE
@@ -149,7 +134,7 @@ def run_pipeline(n_samples, test_size, smote_on, weight_on, log_transform_on, lo
     ]
     TARGET = "satisfaction"
 
-    df = generate_synthetic_data(n_samples, seed)
+    df = pd.read_csv("dataset/passenger_satisfaction_cleaned.csv")
 
     le_gender   = LabelEncoder()
     le_customer = LabelEncoder()
@@ -260,15 +245,15 @@ def run_pipeline(n_samples, test_size, smote_on, weight_on, log_transform_on, lo
 # SIDEBAR
 # ─────────────────────────────────────────────────────────────────
 with st.sidebar:
-    st.markdown("## ✈️ Dashboard Controls")
+    st.markdown("## Dashboard Controls")
     st.markdown("---")
 
-    st.markdown("### 📊 Dataset")
+    st.markdown("### Dataset")
     n_samples = 5000
     test_size = st.slider("Test Split (%)", 10, 40, 20, 5) / 100
     seed      = 42
 
-    st.markdown("### ⚙️ Pipeline Options")
+    st.markdown("### Pipeline Options")
     smote_on         = st.toggle("SMOTE Oversampling",    value=True)
     weight_on        = st.toggle("Domain Sample Weights", value=True)
     log_transform_on = st.toggle(
@@ -288,7 +273,7 @@ with st.sidebar:
         st.markdown("<small style='color:#8892b0'>↳ Applied to departure & arrival delay</small>",
                     unsafe_allow_html=True)
 
-    st.markdown("### 🔧 Hyperparameter Tuning")
+    st.markdown("### Hyperparameter Tuning")
     use_best_params = st.toggle(
         "Best Hyperparameters",
         value=False,
@@ -302,17 +287,17 @@ with st.sidebar:
 </small>""", unsafe_allow_html=True)
 
     st.markdown("---")
-    run_btn = st.button("🚀 Run Pipeline", use_container_width=True, type="primary")
+    run_btn = st.button(" Run Pipeline", use_container_width=True, type="primary")
 
-    st.markdown("### 📌 Navigation")
+    st.markdown("### Navigation")
     page = st.radio("Go to", [
-        "🏠 Overview",
-        "📊 Data & SMOTE",
-        "📈 Model Metrics",
-        "🔀 ROC & PR Curves",
-        "🧩 Confusion Matrices",
-        "🔬 Feature Importance",
-        "🧠 LIME Explanations",
+        "Overview",
+        "Data & SMOTE",
+        "Model Metrics",
+        "ROC & PR Curves",
+        "Confusion Matrices",
+        "Feature Importance",
+        "LIME Explanations",
     ], label_visibility="collapsed")
 
 # ─────────────────────────────────────────────────────────────────
@@ -322,7 +307,7 @@ if "pipeline_data" not in st.session_state:
     st.session_state.pipeline_data = None
 
 if run_btn or st.session_state.pipeline_data is None:
-    with st.spinner("Training models… ⏳"):
+    with st.spinner("Training models… "):
         st.session_state.pipeline_data = run_pipeline(
             n_samples, test_size, smote_on, weight_on,
             log_transform_on, log_passes, use_best_params, int(seed)
@@ -340,32 +325,37 @@ COLORS = ["#4F46E5", "#22C55E", "#F97316"]
 MODEL_NAMES = [r["model"] for r in results]
 
 plt.rcParams.update({
-    "figure.facecolor": "#0f1117", "axes.facecolor": "#1a1f35",
+    "figure.facecolor": "#ffffff", "axes.facecolor": "#ffffff",
     "axes.edgecolor":   "#3d4663", "axes.labelcolor": "#8892b0",
-    "text.color":       "#ccd6f6", "xtick.color": "#8892b0",
-    "ytick.color":      "#8892b0", "grid.color": "#2d3461",
-    "grid.alpha": 0.5,  "legend.facecolor": "#1a1f35",
+    "text.color": "#111827", "xtick.color": "#374151",
+    "ytick.color": "#374151", "grid.color": "#2d3461",
+    "grid.alpha": 0.5,  "legend.facecolor": "#ffffff",
     "legend.edgecolor": "#3d4663",
 })
 
 # ══════════════════════════════════════════════════════════════════
 # OVERVIEW
 # ══════════════════════════════════════════════════════════════════
-if page == "🏠 Overview":
-    st.markdown("# ✈️ Passenger Satisfaction ML Dashboard")
+if page == "Overview":
+    st.markdown("# Passenger Satisfaction ML Dashboard")
     st.markdown("*Three-model classification pipeline with SMOTE, sample weighting, and full evaluation suite*")
 
+<<<<<<< HEAD
     log_badge = f"✅ On ({log_passes} pass{'es' if log_passes > 1 else ''})" if log_transform_on else "❌ Off"
     hp_badge  = "✅ Best params" if use_best_params else "⚙️ Default params"
+=======
+    log_badge = "On" if log_transform_on else "Off"
+    hp_badge  = "Best params" if use_best_params else "Default params"
+>>>>>>> main
     st.markdown(f"**Log Transform:** {log_badge} &nbsp;|&nbsp; **Hyperparameters:** {hp_badge}")
     st.markdown("---")
 
     best_r = max(results, key=lambda r: r["f1"])
-    c1, c2, c3, c4 = st.columns(4)
-    c1.metric("🏆 Best Model",    best_r["model"].split("(")[0].strip())
-    c2.metric("🎯 Best F1",       f"{best_r['f1']:.4f}")
-    c3.metric("📡 Best AUC",      f"{best_r['auc']:.4f}")
-    c4.metric("✅ Best Accuracy", f"{best_r['accuracy']:.4f}")
+    st.metric("Best Model", best_r["model"].split("(")[0].strip())
+    c1, c2, c3 = st.columns(3)
+    c1.metric("Best F1",       f"{best_r['f1']:.4f}")
+    c2.metric("Best AUC",      f"{best_r['auc']:.4f}")
+    c3.metric("Best Accuracy", f"{best_r['accuracy']:.4f}")
 
     st.markdown("---")
     st.markdown('<div class="section-header"><b>All Models at a Glance</b></div>', unsafe_allow_html=True)
@@ -394,8 +384,8 @@ if page == "🏠 Overview":
 # ══════════════════════════════════════════════════════════════════
 # DATA & SMOTE
 # ══════════════════════════════════════════════════════════════════
-elif page == "📊 Data & SMOTE":
-    st.markdown("# 📊 Data Overview & SMOTE")
+elif page == "Data & SMOTE":
+    st.markdown("# Data Overview & SMOTE")
     df_res = data["df_res"]
     st.markdown('<div class="section-header"><b>Feature Distributions</b></div>', unsafe_allow_html=True)
     feature_sel = st.selectbox("Select feature to explore", FEATURES)
@@ -412,8 +402,8 @@ elif page == "📊 Data & SMOTE":
 # ══════════════════════════════════════════════════════════════════
 # MODEL METRICS
 # ══════════════════════════════════════════════════════════════════
-elif page == "📈 Model Metrics":
-    st.markdown("# 📈 Model Performance Metrics")
+elif page == "Model Metrics":
+    st.markdown("# Model Performance Metrics")
 
     st.markdown("---")
     st.markdown('<div class="section-header"><b>Drift Line Chart</b></div>', unsafe_allow_html=True)
@@ -480,8 +470,8 @@ elif page == "📈 Model Metrics":
 # ══════════════════════════════════════════════════════════════════
 # ROC & PR CURVES
 # ══════════════════════════════════════════════════════════════════
-elif page == "🔀 ROC & PR Curves":
-    st.markdown("# 🔀 ROC & Precision-Recall Curves")
+elif page == "ROC & PR Curves":
+    st.markdown("# ROC & Precision-Recall Curves")
 
     col1, col2 = st.columns(2)
     with col1:
@@ -510,31 +500,67 @@ elif page == "🔀 ROC & PR Curves":
 
     st.markdown("---")
     st.markdown('<div class="section-header"><b>Threshold Explorer</b></div>', unsafe_allow_html=True)
+
     model_sel = st.selectbox("Select model", MODEL_NAMES)
     r_sel = next(r for r in results if r["model"] == model_sel)
+
     thresh = st.slider("Decision Threshold", 0.1, 0.9, 0.5, 0.01)
+
     y_pred_thresh = (r_sel["prob"] >= thresh).astype(int)
+
+    precision = precision_score(y_test, y_pred_thresh, zero_division=0)
+    recall = recall_score(y_test, y_pred_thresh, zero_division=0)
+    f1 = f1_score(y_test, y_pred_thresh, zero_division=0)
+    acc = accuracy_score(y_test, y_pred_thresh)
+
+    tn, fp, fn, tp = confusion_matrix(y_test, y_pred_thresh).ravel()
+    specificity = tn / (tn + fp) if (tn + fp) > 0 else 0
+
     c1, c2, c3, c4 = st.columns(4)
-    c1.metric("Precision", f"{precision_score(y_test, y_pred_thresh, zero_division=0):.4f}")
-    c2.metric("Recall",    f"{recall_score(y_test, y_pred_thresh, zero_division=0):.4f}")
-    c3.metric("F1",        f"{f1_score(y_test, y_pred_thresh, zero_division=0):.4f}")
-    c4.metric("Accuracy",  f"{accuracy_score(y_test, y_pred_thresh):.4f}")
+    c1.metric("Sensitivity", f"{recall:.4f}")
+    c2.metric("Specificity", f"{specificity:.4f}")
+    c3.metric("F1", f"{f1:.4f}")
+    c4.metric("Accuracy", f"{acc:.4f}")
 
     fig, ax = plt.subplots(figsize=(10, 3))
     fpr, tpr, thresholds = roc_curve(y_test, r_sel["prob"])
+
     ax.plot(fpr, tpr, color=COLORS[MODEL_NAMES.index(model_sel)], linewidth=2)
+
+    # Current threshold point that user updates
     idx = np.argmin(np.abs(thresholds - thresh))
-    ax.scatter([fpr[idx]], [tpr[idx]], color="#ffd166", s=100, zorder=5, label=f"Threshold={thresh:.2f}")
+    ax.scatter([fpr[idx]], [tpr[idx]], color="#ffd166", s=100, zorder=5,
+            label=f"Selected threshold={thresh:.2f}")
+
+    # Youden's J to calc best threshold
+    sens = tpr
+    spec = 1 - fpr
+    youden_j = sens + spec - 1
+    best_idx = np.argmax(youden_j)
+    best_thresh = thresholds[best_idx]
+
+    # Best threshold point to display
+    ax.scatter([fpr[best_idx]], [tpr[best_idx]],
+            color="cyan", s=100, zorder=5,
+            label=f"Best threshold={best_thresh:.2f}")
+
     ax.plot([0,1],[0,1],"w--",alpha=0.5)
-    ax.set_xlabel("FPR"); ax.set_ylabel("TPR")
-    ax.set_title(f"ROC — {model_sel}"); ax.legend(); ax.grid(True)
-    st.pyplot(fig); plt.close()
+    ax.set_xlabel("FPR")
+    ax.set_ylabel("TPR")
+    ax.set_title(f"ROC — {model_sel}")
+    ax.legend()
+    ax.grid(True)
+
+    st.pyplot(fig)
+    plt.close()
+
+    st.caption(f"Best threshold (with Youden’s J): {best_thresh:.3f}, maximizes balance between Sensitivity and Specificity")
 
 # ══════════════════════════════════════════════════════════════════
 # CONFUSION MATRICES
 # ══════════════════════════════════════════════════════════════════
-elif page == "🧩 Confusion Matrices":
-    st.markdown("# 🧩 Confusion Matrices")
+elif page == "Confusion Matrices":
+    st.markdown("# Confusion Matrices")
 
     fig, axes = plt.subplots(1, 3, figsize=(15, 5))
     for ax, r, color in zip(axes, results, COLORS):
@@ -550,8 +576,8 @@ elif page == "🧩 Confusion Matrices":
 # ══════════════════════════════════════════════════════════════════
 # FEATURE IMPORTANCE
 # ══════════════════════════════════════════════════════════════════
-elif page == "🔬 Feature Importance":
-    st.markdown("# 🔬 Feature Importance (Permutation)")
+elif page == "Feature Importance":
+    st.markdown("# Feature Importance (Permutation)")
 
     with st.spinner("Computing permutation importances…"):
         all_imps = []
@@ -563,52 +589,59 @@ elif page == "🔬 Feature Importance":
             all_imps.append(perm.importances_mean)
 
     mean_imp = np.mean(all_imps, axis=0)
-    top_idx  = np.argsort(mean_imp)[::-1]
+    top_idx = np.argsort(mean_imp)[::-1]
 
-    col1, col2 = st.columns(2)
-    with col1:
-        st.markdown('<div class="section-header"><b>Per-Model Importance (Top 8)</b></div>', unsafe_allow_html=True)
-        fig, axes = plt.subplots(1, 3, figsize=(14, 5))
-        for ax, r, imp, color in zip(axes, results, all_imps, COLORS):
-            idx = np.argsort(imp)[::-1][:8]
-            ax.barh([FEATURES[i] for i in idx[::-1]], imp[idx[::-1]], color=color, alpha=0.85)
-            ax.set_title(r["model"].split("(")[0].strip(), color=color)
-            ax.set_xlabel("Mean Importance")
-        plt.tight_layout(); st.pyplot(fig); plt.close()
+    st.markdown('<div class="section-header"><b>Per-Model Importance (Top 8)</b></div>', unsafe_allow_html=True)
 
-    with col2:
-        st.markdown('<div class="section-header"><b>Radar — Top 5 (Avg)</b></div>', unsafe_allow_html=True)
-        top5_feats = [FEATURES[i] for i in top_idx[:5]]
-        top5_vals  = mean_imp[top_idx[:5]]
-        vals   = top5_vals.tolist() + [top5_vals[0]]
-        angles = np.linspace(0, 2*np.pi, 5, endpoint=False).tolist() + [0]
-        fig = plt.figure(figsize=(5, 5))
-        ax  = fig.add_subplot(111, polar=True)
-        ax.plot(angles, vals, color="#4F46E5", linewidth=2)
-        ax.fill(angles, vals, alpha=0.25, color="#4F46E5")
-        ax.set_xticks(angles[:-1]); ax.set_xticklabels(top5_feats, fontsize=8)
-        ax.set_title("Top 5 Features (Avg)", y=1.1, color="#ccd6f6")
-        ax.set_facecolor("#1a1f35")
-        st.pyplot(fig); plt.close()
+    fig, axes = plt.subplots(1, 3, figsize=(16, 5))
+    for ax, r, imp, color in zip(axes, results, all_imps, COLORS):
+        idx = np.argsort(imp)[::-1][:8]
+        ax.barh([FEATURES[i] for i in idx[::-1]], imp[idx[::-1]], color=color, alpha=0.9)
+        ax.set_title(r["model"].split("(")[0].strip(), color=color)
+        ax.set_xlabel("Mean Importance")
+    plt.tight_layout()
+    st.pyplot(fig)
+    plt.close()
+
+    st.markdown('<div class="section-header"><b>Top 5 Features (Average)</b></div>', unsafe_allow_html=True)
+
+    top5_feats = [FEATURES[i] for i in top_idx[:5]]
+    top5_vals = mean_imp[top_idx[:5]]
+    vals = top5_vals.tolist() + [top5_vals[0]]
+    angles = np.linspace(0, 2 * np.pi, 5, endpoint=False).tolist() + [0]
+
+    fig = plt.figure(figsize=(7, 7))
+    ax = fig.add_subplot(111, polar=True)
+    ax.plot(angles, vals, color="#4F46E5", linewidth=2)
+    ax.fill(angles, vals, alpha=0.25, color="#4F46E5")
+    ax.set_xticks(angles[:-1])
+    ax.set_xticklabels(top5_feats, fontsize=10)
+    ax.set_title("Top 5 Features (Avg)", y=1.1, color="#ccd6f6")
+    ax.set_facecolor("#1a1f35")
+    st.pyplot(fig)
+    plt.close()
 
     st.markdown("---")
     st.markdown('<div class="section-header"><b>Ranked Feature Table</b></div>', unsafe_allow_html=True)
+
     imp_df = pd.DataFrame({
-        "Feature": FEATURES, "Avg Importance": mean_imp,
+        "Feature": FEATURES,
+        "Avg Importance": mean_imp,
         **{r["model"].split("(")[0].strip(): all_imps[i] for i, r in enumerate(results)}
     }).sort_values("Avg Importance", ascending=False).reset_index(drop=True)
+
     imp_df.index += 1
+
     st.dataframe(
         imp_df.style.format({c: "{:.4f}" for c in imp_df.columns[1:]})
                     .background_gradient(subset=["Avg Importance"], cmap="coolwarm"),
         use_container_width=True
     )
-
 # ══════════════════════════════════════════════════════════════════
 # LIME EXPLANATIONS
 # ══════════════════════════════════════════════════════════════════
-elif page == "🧠 LIME Explanations":
-    st.markdown("# 🧠 LIME — Local Interpretable Model Explanations")
+elif page == "LIME Explanations":
+    st.markdown("# LIME — Local Interpretable Model Explanations")
 
     col_ctrl1, col_ctrl2 = st.columns([1, 2])
     with col_ctrl1:
@@ -622,13 +655,13 @@ elif page == "🧠 LIME Explanations":
 
     with col_ctrl2:
         true_label = y_test[instance_idx]
-        label_str  = "😊 Satisfied" if true_label == 1 else "😞 Unsatisfied"
+        label_str  = "Satisfied" if true_label == 1 else "Unsatisfied"
         st.markdown(f"""
-<div style="background:linear-gradient(135deg,#1a1f35,#1e2442);
-            border:1px solid #3d4663;border-radius:12px;padding:20px;margin-top:8px;">
-  <p style="color:#8892b0;margin:0;font-size:0.85rem">TRUE LABEL</p>
-  <h2 style="color:#ccd6f6;margin:4px 0">{label_str}</h2>
-  <p style="color:#8892b0;margin:0;font-size:0.8rem">Instance #{instance_idx} of {len(X_test_sc)}</p>
+<div style="background:#E7ECF6;
+            border:1px solid #4F46E5;border-radius:12px;padding:20px;margin-top:8px;">
+  <p style="color:#334155;margin:0;font-size:0.85rem;letter-spacing:.04em;">TRUE LABEL</p>
+  <h2 style="color:#1E293B;margin:6px 0 4px 0;font-weight:700;">{label_str}</h2>
+  <p style="color:#475569;margin:0;font-size:0.8rem;">Instance #{instance_idx} of {len(X_test_sc)}</p>
 </div>""", unsafe_allow_html=True)
 
     # Build / cache LIME explainer
@@ -650,21 +683,19 @@ elif page == "🧠 LIME Explanations":
     # One tab per model
     tab_labels = []
     for r in results:
-        crown = "🥇 " if r["model"] == max(results, key=lambda x: x["f1"])["model"] else "📊 "
-        tab_labels.append(crown + r["model"])
+        tab_labels.append(r["model"])
     tabs = st.tabs(tab_labels)
 
     for tab, r, color in zip(tabs, results, COLORS):
         with tab:
             pred_probs = r["model_obj"].predict_proba(instance.reshape(1, -1))[0]
             pred_label = int(np.argmax(pred_probs))
-            pred_str   = "😊 Satisfied" if pred_label == 1 else "😞 Unsatisfied"
+            pred_str   = " Satisfied" if pred_label == 1 else "Unsatisfied"
             confidence = pred_probs[pred_label]
 
-            mc1, mc2, mc3 = st.columns(3)
+            mc1, mc2 = st.columns(2)
             mc1.metric("Prediction", pred_str)
             mc2.metric("Confidence", f"{confidence:.1%}")
-            mc3.metric("True Label", label_str)
 
             with st.spinner(f"Computing LIME for {r['model']}…"):
                 exp = explainer.explain_instance(
@@ -682,7 +713,7 @@ elif page == "🧠 LIME Explanations":
 
             fig, ax = plt.subplots(figsize=(10, max(4, len(feat_names_s) * 0.55)))
             bars = ax.barh(feat_names_s, weights_s, color=bar_colors, alpha=0.85, edgecolor="#3d4663")
-            ax.axvline(0, color="#ccd6f6", linewidth=1, alpha=0.6)
+            ax.axvline(0, color="#111827", linewidth=1, alpha=0.6)
             ax.set_xlabel("LIME Weight  (positive → Satisfied, negative → Unsatisfied)")
             ax.set_title(
                 f"LIME Explanation — {r['model']}\n"
@@ -692,7 +723,7 @@ elif page == "🧠 LIME Explanations":
                 xpos = w + (0.001 if w >= 0 else -0.001)
                 ha   = "left" if w >= 0 else "right"
                 ax.text(xpos, bar.get_y() + bar.get_height() / 2,
-                        f"{w:+.4f}", va="center", ha=ha, fontsize=8, color="#ccd6f6")
+                        f"{w:+.4f}", va="center", ha=ha, fontsize=8, color="#111827")
             ax.grid(axis="x", alpha=0.4)
             plt.tight_layout()
             st.pyplot(fig); plt.close()
