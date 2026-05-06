@@ -643,11 +643,11 @@ elif page == "LIME Explanations":
         true_label = y_test[instance_idx]
         label_str  = "Satisfied" if true_label == 1 else "Unsatisfied"
         st.markdown(f"""
-<div style="background:linear-gradient(135deg,#1a1f35,#1e2442);
-            border:1px solid #3d4663;border-radius:12px;padding:20px;margin-top:8px;">
-  <p style="color:#8892b0;margin:0;font-size:0.85rem">TRUE LABEL</p>
-  <h2 style="color:#ccd6f6;margin:4px 0">{label_str}</h2>
-  <p style="color:#8892b0;margin:0;font-size:0.8rem">Instance #{instance_idx} of {len(X_test_sc)}</p>
+<div style="background:#E7ECF6;
+            border:1px solid #4F46E5;border-radius:12px;padding:20px;margin-top:8px;">
+  <p style="color:#334155;margin:0;font-size:0.85rem;letter-spacing:.04em;">TRUE LABEL</p>
+  <h2 style="color:#1E293B;margin:6px 0 4px 0;font-weight:700;">{label_str}</h2>
+  <p style="color:#475569;margin:0;font-size:0.8rem;">Instance #{instance_idx} of {len(X_test_sc)}</p>
 </div>""", unsafe_allow_html=True)
 
     # Build / cache LIME explainer
@@ -679,10 +679,9 @@ elif page == "LIME Explanations":
             pred_str   = " Satisfied" if pred_label == 1 else "Unsatisfied"
             confidence = pred_probs[pred_label]
 
-            mc1, mc2, mc3 = st.columns(3)
+            mc1, mc2 = st.columns(2)
             mc1.metric("Prediction", pred_str)
             mc2.metric("Confidence", f"{confidence:.1%}")
-            mc3.metric("True Label", label_str)
 
             with st.spinner(f"Computing LIME for {r['model']}…"):
                 exp = explainer.explain_instance(
